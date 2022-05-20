@@ -122,13 +122,20 @@ class CallkitNotificationManager(private val context: Context) {
         if (isCustomNotification) {
             notificationViews =
                     RemoteViews(context.packageName, R.layout.layout_custom_notification)
+
+            var handle = data.getString(EXTRA_CALLKIT_HANDLE, "")
+            var nameCaller = data.getString(EXTRA_CALLKIT_NAME_CALLER, "")
+
+            if (nameCaller.contains("\n")) {
+                nameCaller = nameCaller.replace("\n", " ")
+            }
             notificationViews?.setTextViewText(
                     R.id.tvNameCaller,
-                    data.getString(EXTRA_CALLKIT_NAME_CALLER, "")
+                    nameCaller,
             )
             notificationViews?.setTextViewText(
                     R.id.tvNumber,
-                    data.getString(EXTRA_CALLKIT_HANDLE, "")
+                    handle,
             )
             notificationViews?.setOnClickPendingIntent(
                     R.id.llDecline,
@@ -148,14 +155,16 @@ class CallkitNotificationManager(private val context: Context) {
                     R.id.tvAccept,
                     if (TextUtils.isEmpty(textAccept)) context.getString(R.string.text_accept) else textAccept
             )
-            val avatarUrl = data.getString(EXTRA_CALLKIT_AVATAR, "")
-            if (avatarUrl != null && avatarUrl.isNotEmpty()) {
-                val headers =
-                        data.getSerializable(CallkitIncomingBroadcastReceiver.EXTRA_CALLKIT_HEADERS) as HashMap<String, Any?>
-                getPicassoInstance(context, headers).load(avatarUrl)
-                        .transform(CircleTransform())
-                        .into(targetLoadAvatarCustomize)
-            }
+
+            // Disable avatar in notification
+//            val avatarUrl = data.getString(EXTRA_CALLKIT_AVATAR, "")
+//            if (avatarUrl != null && avatarUrl.isNotEmpty()) {
+//                val headers =
+//                        data.getSerializable(CallkitIncomingBroadcastReceiver.EXTRA_CALLKIT_HEADERS) as HashMap<String, Any?>
+//                getPicassoInstance(context, headers).load(avatarUrl)
+//                        .transform(CircleTransform())
+//                        .into(targetLoadAvatarCustomize)
+//            }
 
             notificationBuilder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
             notificationBuilder.setCustomContentView(notificationViews)

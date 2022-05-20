@@ -165,8 +165,23 @@ class CallkitIncomingActivity : Activity() {
         val data = intent.extras?.getBundle(EXTRA_CALLKIT_INCOMING_DATA)
         if (data == null) finish()
 
-        tvNameCaller.text = data?.getString(EXTRA_CALLKIT_NAME_CALLER, "")
-        tvNumber.text = data?.getString(EXTRA_CALLKIT_HANDLE, "")
+        var nameCaller = data?.getString(EXTRA_CALLKIT_NAME_CALLER, "") ?: ""
+        var handle = data?.getString(EXTRA_CALLKIT_HANDLE, "") ?: ""
+
+        if (nameCaller.contains("\n")) {
+            val splits = nameCaller.split("\n")
+            println("nameCaller: $nameCaller")
+            println("splits: $splits")
+            nameCaller = splits[0]
+            try {
+                handle = splits[1]
+            } catch (ex: Exception) {
+                println(ex)
+            }
+        }
+
+        tvNameCaller.text = nameCaller
+        tvNumber.text = handle
 
         val isShowLogo = data?.getBoolean(EXTRA_CALLKIT_IS_SHOW_LOGO, false)
         ivLogo.visibility = if (isShowLogo == true) View.VISIBLE else View.INVISIBLE

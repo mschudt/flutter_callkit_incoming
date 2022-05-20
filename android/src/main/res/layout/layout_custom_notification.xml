@@ -8,7 +8,7 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="22dp">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -42,7 +42,7 @@
             android:layout_alignParentRight="true"
             android:layout_centerInParent="true"
             android:scaleType="centerCrop"
-            android:visibility="invisible" />
+            android:visibility="gone" />
     </RelativeLayout>
 
     <LinearLayout
@@ -55,7 +55,7 @@
         <LinearLayout
             android:id="@+id/llDecline"
             android:layout_width="0dp"
-            android:layout_height="@dimen/base_margin_x3_5"
+            android:layout_height="@dimen/base_margin_x3"
             android:layout_marginRight="@dimen/base_margin_half"
             android:layout_weight="1"
             android:background="@drawable/rounded_button_decline"
@@ -88,7 +88,7 @@
         <LinearLayout
             android:id="@+id/llAccept"
             android:layout_width="0dp"
-            android:layout_height="@dimen/base_margin_x3_5"
+            android:layout_height="@dimen/base_margin_x3"
             android:layout_marginLeft="@dimen/base_margin_half"
             android:layout_weight="1"
             android:background="@drawable/rounded_button_accept"
