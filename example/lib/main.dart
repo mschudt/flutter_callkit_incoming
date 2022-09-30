@@ -34,8 +34,10 @@ Future<void> showCallkitIncoming(String uuid) async {
       'isShowCallback': false,
       'ringtonePath': 'system_ringtone_default',
       'backgroundColor': '#0955fa',
-      'background': 'https://i.pravatar.cc/500',
-      'actionColor': '#4CAF50'
+      'backgroundUrl': 'https://i.pravatar.cc/500',
+      'actionColor': '#4CAF50',
+      'incomingCallNotificationChannelName': "Incoming Call",
+      'missedCallNotificationChannelName': "Missed Call",
     },
     'ios': <String, dynamic>{
       'iconName': 'CallKitLogo',

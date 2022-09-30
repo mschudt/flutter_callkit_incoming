@@ -16,7 +16,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.TextUtils
-import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
@@ -26,7 +25,9 @@ import com.hiennv.flutter_callkit_incoming.CallkitIncomingBroadcastReceiver.Comp
 import com.hiennv.flutter_callkit_incoming.CallkitIncomingBroadcastReceiver.Companion.EXTRA_CALLKIT_DURATION
 import com.hiennv.flutter_callkit_incoming.CallkitIncomingBroadcastReceiver.Companion.EXTRA_CALLKIT_HANDLE
 import com.hiennv.flutter_callkit_incoming.CallkitIncomingBroadcastReceiver.Companion.EXTRA_CALLKIT_ID
+import com.hiennv.flutter_callkit_incoming.CallkitIncomingBroadcastReceiver.Companion.EXTRA_CALLKIT_INCOMING_CALL_NOTIFICATION_CHANNEL_NAME
 import com.hiennv.flutter_callkit_incoming.CallkitIncomingBroadcastReceiver.Companion.EXTRA_CALLKIT_IS_CUSTOM_NOTIFICATION
+import com.hiennv.flutter_callkit_incoming.CallkitIncomingBroadcastReceiver.Companion.EXTRA_CALLKIT_MISSED_CALL_NOTIFICATION_CHANNEL_NAME
 import com.hiennv.flutter_callkit_incoming.CallkitIncomingBroadcastReceiver.Companion.EXTRA_CALLKIT_NAME_CALLER
 import com.hiennv.flutter_callkit_incoming.CallkitIncomingBroadcastReceiver.Companion.EXTRA_CALLKIT_TEXT_ACCEPT
 import com.hiennv.flutter_callkit_incoming.CallkitIncomingBroadcastReceiver.Companion.EXTRA_CALLKIT_TEXT_CALLBACK
@@ -45,10 +46,14 @@ class CallkitNotificationManager(private val context: Context) {
     companion object {
 
         const val EXTRA_TIME_START_CALL = "EXTRA_TIME_START_CALL"
+
+        private const val NOTIFICATION_CHANNEL_ID_INCOMING = "callkit_incoming_channel_id"
+        private const val NOTIFICATION_CHANNEL_ID_MISSED = "callkit_missed_channel_id"
     }
 
     private lateinit var notificationBuilder: NotificationCompat.Builder
     private var notificationViews: RemoteViews? = null
+    private var notificationSmallViews: RemoteViews? = null
     private var notificationId: Int = 9696
 
     private var targetLoadAvatarDefault = object : Target {
@@ -57,19 +62,24 @@ class CallkitNotificationManager(private val context: Context) {
             getNotificationManager().notify(notificationId, notificationBuilder.build())
         }
 
-        override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {}
+        override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
+        }
 
-        override fun onPrepareLoad(placeHolderDrawable: Drawable?) {}
+        override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
+        }
     }
 
     private var targetLoadAvatarCustomize = object : Target {
         override fun onBitmapLoaded(bitmap: Bitmap?, from: Picasso.LoadedFrom?) {
             notificationViews?.setImageViewBitmap(R.id.ivAvatar, bitmap)
             notificationViews?.setViewVisibility(R.id.ivAvatar, View.VISIBLE)
+            notificationSmallViews?.setImageViewBitmap(R.id.ivAvatar, bitmap)
+            notificationSmallViews?.setViewVisibility(R.id.ivAvatar, View.VISIBLE)
             getNotificationManager().notify(notificationId, notificationBuilder.build())
         }
 
-        override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {}
+        override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
+        }
 
         override fun onPrepareLoad(placeHolderDrawable: Drawable?) {
         }
@@ -80,11 +90,14 @@ class CallkitNotificationManager(private val context: Context) {
         data.putLong(EXTRA_TIME_START_CALL, System.currentTimeMillis())
 
         notificationId = data.getString(EXTRA_CALLKIT_ID, "callkit_incoming").hashCode()
-        createNotificationChanel()
+        createNotificationChanel(
+            data.getString(EXTRA_CALLKIT_INCOMING_CALL_NOTIFICATION_CHANNEL_NAME, "Incoming Call"),
+            data.getString(EXTRA_CALLKIT_MISSED_CALL_NOTIFICATION_CHANNEL_NAME, "Missed Call"),
+        )
 
-        notificationBuilder = NotificationCompat.Builder(context, "callkit_incoming_channel_id")
+        notificationBuilder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID_INCOMING)
         notificationBuilder.setAutoCancel(false)
-        notificationBuilder.setChannelId("callkit_incoming_channel_id")
+        notificationBuilder.setChannelId(NOTIFICATION_CHANNEL_ID_INCOMING)
         notificationBuilder.setDefaults(NotificationCompat.DEFAULT_VIBRATE)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             notificationBuilder.setCategory(NotificationCompat.CATEGORY_CALL)
@@ -116,12 +129,24 @@ class CallkitNotificationManager(private val context: Context) {
             notificationBuilder.color = Color.parseColor(actionColor)
         } catch (error: Exception) {
         }
-        notificationBuilder.setChannelId("callkit_incoming_channel_id")
+        notificationBuilder.setChannelId(NOTIFICATION_CHANNEL_ID_INCOMING)
         notificationBuilder.priority = NotificationCompat.PRIORITY_MAX
         val isCustomNotification = data.getBoolean(EXTRA_CALLKIT_IS_CUSTOM_NOTIFICATION, false)
         if (isCustomNotification) {
             notificationViews =
                     RemoteViews(context.packageName, R.layout.layout_custom_notification)
+            initNotificationViews(notificationViews!!, data)
+
+
+            if (Build.MANUFACTURER.equals("Samsung", ignoreCase = true) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                notificationSmallViews =
+                        RemoteViews(context.packageName, R.layout.layout_custom_small_ex_notification)
+                initNotificationViews(notificationSmallViews!!, data)
+            } else {
+                notificationSmallViews =
+                        RemoteViews(context.packageName, R.layout.layout_custom_small_notification)
+                initNotificationViews(notificationSmallViews!!, data)
+            }
 
             var handle = data.getString(EXTRA_CALLKIT_HANDLE, "")
             var nameCaller = data.getString(EXTRA_CALLKIT_NAME_CALLER, "")
@@ -167,9 +192,9 @@ class CallkitNotificationManager(private val context: Context) {
 //            }
 
             notificationBuilder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
-            notificationBuilder.setCustomContentView(notificationViews)
+            notificationBuilder.setCustomContentView(notificationSmallViews)
             notificationBuilder.setCustomBigContentView(notificationViews)
-            notificationBuilder.setCustomHeadsUpContentView(notificationViews)
+            notificationBuilder.setCustomHeadsUpContentView(notificationSmallViews)
         } else {
             val avatarUrl = data.getString(EXTRA_CALLKIT_AVATAR, "")
             if (avatarUrl != null && avatarUrl.isNotEmpty()) {
@@ -200,9 +225,55 @@ class CallkitNotificationManager(private val context: Context) {
         getNotificationManager().notify(notificationId, notification)
     }
 
+    private fun initNotificationViews(remoteViews: RemoteViews, data: Bundle) {
+        var nameCaller = data.getString(EXTRA_CALLKIT_NAME_CALLER, "")
+
+        if (nameCaller.contains("\n")) {
+            nameCaller = nameCaller.replace("\n", " ")
+        }
+
+        remoteViews.setTextViewText(
+                R.id.tvNameCaller,
+                nameCaller
+        )
+        remoteViews.setTextViewText(
+                R.id.tvNumber,
+                data.getString(EXTRA_CALLKIT_HANDLE, "")
+        )
+        remoteViews.setOnClickPendingIntent(
+                R.id.llDecline,
+                getDeclinePendingIntent(notificationId, data)
+        )
+        val textDecline = data.getString(EXTRA_CALLKIT_TEXT_DECLINE, "")
+        remoteViews.setTextViewText(
+                R.id.tvDecline,
+                if (TextUtils.isEmpty(textDecline)) context.getString(R.string.text_decline) else textDecline
+        )
+        remoteViews.setOnClickPendingIntent(
+                R.id.llAccept,
+                getAcceptPendingIntent(notificationId, data)
+        )
+        val textAccept = data.getString(EXTRA_CALLKIT_TEXT_ACCEPT, "")
+        remoteViews.setTextViewText(
+                R.id.tvAccept,
+                if (TextUtils.isEmpty(textAccept)) context.getString(R.string.text_accept) else textAccept
+        )
+        val avatarUrl = data.getString(EXTRA_CALLKIT_AVATAR, "")
+        if (avatarUrl != null && avatarUrl.isNotEmpty()) {
+            val headers =
+                    data.getSerializable(CallkitIncomingBroadcastReceiver.EXTRA_CALLKIT_HEADERS) as HashMap<String, Any?>
+            getPicassoInstance(context, headers).load(avatarUrl)
+                    .transform(CircleTransform())
+                    .into(targetLoadAvatarCustomize)
+        }
+    }
+
     fun showMissCallNotification(data: Bundle) {
         notificationId = data.getString(EXTRA_CALLKIT_ID, "callkit_incoming").hashCode() + 1
-        createNotificationChanel()
+        createNotificationChanel(
+            data.getString(EXTRA_CALLKIT_INCOMING_CALL_NOTIFICATION_CHANNEL_NAME, "Incoming Call"),
+            data.getString(EXTRA_CALLKIT_MISSED_CALL_NOTIFICATION_CHANNEL_NAME, "Missed Call"),
+        )
         val missedCallSound: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         val typeCall = data.getInt(EXTRA_CALLKIT_TYPE, -1)
         var smallIcon = context.applicationInfo.icon
@@ -213,8 +284,8 @@ class CallkitNotificationManager(private val context: Context) {
                 smallIcon = R.drawable.ic_call_missed
             }
         }
-        notificationBuilder = NotificationCompat.Builder(context, "callkit_missed_channel_id")
-        notificationBuilder.setChannelId("callkit_missed_channel_id")
+        notificationBuilder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID_MISSED)
+        notificationBuilder.setChannelId(NOTIFICATION_CHANNEL_ID_MISSED)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 notificationBuilder.setCategory(Notification.CATEGORY_MISSED_CALL)
@@ -318,15 +389,29 @@ class CallkitNotificationManager(private val context: Context) {
         }, 1000)
     }
 
-    private fun createNotificationChanel() {
+    fun incomingChannelEnabled(): Boolean {
+        val notificationManager = getNotificationManager()
+        val channel = notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL_ID_INCOMING)
+
+        return notificationManager.areNotificationsEnabled() &&
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                        channel != null &&
+                        channel.importance > NotificationManagerCompat.IMPORTANCE_NONE) ||
+                Build.VERSION.SDK_INT < Build.VERSION_CODES.O
+    }
+
+    private fun createNotificationChanel(
+        incomingCallChannelName: String,
+        missedCallChannelName: String,
+    ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            var channelCall = getNotificationManager().getNotificationChannel("callkit_incoming_channel_id")
-            if (channelCall != null){
+            var channelCall = getNotificationManager().getNotificationChannel(NOTIFICATION_CHANNEL_ID_INCOMING)
+            if (channelCall != null) {
                 channelCall.setSound(null, null)
-            }else {
+            } else {
                 channelCall = NotificationChannel(
-                        "callkit_incoming_channel_id",
-                        "Incoming Call",
+                        incomingCallChannelName,
+                        NOTIFICATION_CHANNEL_ID_INCOMING,
                         NotificationManager.IMPORTANCE_HIGH
                 ).apply {
                     description = ""
@@ -345,8 +430,8 @@ class CallkitNotificationManager(private val context: Context) {
             getNotificationManager().createNotificationChannel(channelCall)
 
             val channelMissedCall = NotificationChannel(
-                    "callkit_missed_channel_id",
-                    "Missed Call",
+                    NOTIFICATION_CHANNEL_ID_MISSED,
+                    missedCallChannelName,
                     NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = ""

@@ -86,7 +86,9 @@ A Flutter plugin to show incoming call in your Flutter app(Custom for Android/Ca
           'ringtonePath': 'system_ringtone_default',
           'backgroundColor': '#0955fa',
           'backgroundUrl': 'https://i.pravatar.cc/500',
-          'actionColor': '#4CAF50'
+          'actionColor': '#4CAF50',
+          'incomingCallNotificationChannelName': "Incoming Call",
+          'missedCallNotificationChannelName': "Missed Call"
         },
         'ios': <String, dynamic>{
           'iconName': 'CallKitLogo',
@@ -315,8 +317,10 @@ A Flutter plugin to show incoming call in your Flutter app(Custom for Android/Ca
     |       **`isShowCallback`**      | Show callback action from miss call notification. | `true`          |
     |      **`ringtonePath`**     | File name ringtone. put file into `/android/app/src/main/res/raw/ringtone_default.pm3`                                                                                                    |`system_ringtone_default` <br>using ringtone default of the phone|
     |     **`backgroundColor`**   | Incoming call screen background color.                                  |     `#0955fa`    |
-    |      **`backgroundUrl`**    | Using image background for Incoming call screen.                        |       _None_     |
+    |      **`backgroundUrl`**    | Using image background for Incoming call screen. example: http://... https://... or "assets/abc.png"                       |       _None_     |
     |      **`actionColor`**      | Color used in button/text on notification.                              |    `#4CAF50`     |
+    |  **`incomingCallNotificationChannelName`** | Notification channel name of incoming call.              | `Incoming call`  |
+    |  **`missedCallNotificationChannelName`** | Notification channel name of missed call.                  |  `Missed call`   |
 
     <br>
     
