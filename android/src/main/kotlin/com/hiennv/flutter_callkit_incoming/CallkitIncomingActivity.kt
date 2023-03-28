@@ -54,15 +54,15 @@ class CallkitIncomingActivity : Activity() {
         const val ACTION_ENDED_CALL_INCOMING =
                 "com.hiennv.flutter_callkit_incoming.ACTION_ENDED_CALL_INCOMING"
 
-        fun getIntent(data: Bundle) = Intent(ACTION_CALL_INCOMING).apply {
-            action = ACTION_CALL_INCOMING
+        fun getIntent(context: Context, data: Bundle) = Intent(ACTION_CALL_INCOMING).apply {
+            action = "${context.packageName}.${ACTION_CALL_INCOMING}"
             putExtra(EXTRA_CALLKIT_INCOMING_DATA, data)
             flags =
                     Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
         }
 
-        fun getIntentEnded() =
-                Intent(ACTION_ENDED_CALL_INCOMING)
+        fun getIntentEnded(context: Context) =
+                Intent("${context.packageName}.${ACTION_ENDED_CALL_INCOMING}")
 
     }
 
@@ -300,6 +300,7 @@ class CallkitIncomingActivity : Activity() {
             startActivities(arrayOf(intent, intentTransparent))
         } else {
             val acceptIntent = CallkitIncomingBroadcastReceiver.getIntentAccept(this@CallkitIncomingActivity, data)
+            acceptIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
             sendBroadcast(acceptIntent)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -318,6 +319,11 @@ class CallkitIncomingActivity : Activity() {
         val intent =
                 CallkitIncomingBroadcastReceiver.getIntentDecline(this@CallkitIncomingActivity, data)
         sendBroadcast(intent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            finishAndRemoveTask()
+        } else {
+            finish()
+        }
     }
 
     private fun getPicassoInstance(context: Context, headers: HashMap<String, Any?>): Picasso {
