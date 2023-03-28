@@ -153,49 +153,6 @@ class CallkitNotificationManager(private val context: Context) {
                 initNotificationViews(notificationSmallViews!!, data)
             }
 
-            var handle = data.getString(EXTRA_CALLKIT_HANDLE, "")
-            var nameCaller = data.getString(EXTRA_CALLKIT_NAME_CALLER, "")
-
-            if (nameCaller.contains("\n")) {
-                nameCaller = nameCaller.replace("\n", " ")
-            }
-            notificationViews?.setTextViewText(
-                    R.id.tvNameCaller,
-                    nameCaller,
-            )
-            notificationViews?.setTextViewText(
-                    R.id.tvNumber,
-                    handle,
-            )
-            notificationViews?.setOnClickPendingIntent(
-                    R.id.llDecline,
-                    getDeclinePendingIntent(notificationId, data)
-            )
-            val textDecline = data.getString(EXTRA_CALLKIT_TEXT_DECLINE, "")
-            notificationViews?.setTextViewText(
-                    R.id.tvDecline,
-                    if (TextUtils.isEmpty(textDecline)) context.getString(R.string.text_decline) else textDecline
-            )
-            notificationViews?.setOnClickPendingIntent(
-                    R.id.llAccept,
-                    getAcceptPendingIntent(notificationId, data)
-            )
-            val textAccept = data.getString(EXTRA_CALLKIT_TEXT_ACCEPT, "")
-            notificationViews?.setTextViewText(
-                    R.id.tvAccept,
-                    if (TextUtils.isEmpty(textAccept)) context.getString(R.string.text_accept) else textAccept
-            )
-
-            // Disable avatar in notification
-//            val avatarUrl = data.getString(EXTRA_CALLKIT_AVATAR, "")
-//            if (avatarUrl != null && avatarUrl.isNotEmpty()) {
-//                val headers =
-//                        data.getSerializable(CallkitIncomingBroadcastReceiver.EXTRA_CALLKIT_HEADERS) as HashMap<String, Any?>
-//                getPicassoInstance(context, headers).load(avatarUrl)
-//                        .transform(CircleTransform())
-//                        .into(targetLoadAvatarCustomize)
-//            }
-
             notificationBuilder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
             notificationBuilder.setCustomContentView(notificationSmallViews)
             notificationBuilder.setCustomBigContentView(notificationViews)
